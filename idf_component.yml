@@ -1,0 +1,6 @@
+version: "1.0.0"
+description: "Framed, CRC-checked messages over an ESP32 UART, with acknowledged delivery, retries and duplicate filtering"
+url: "https://github.com/PATEmbedded/esp32-uart-link"
+license: "MIT"
+dependencies:
+  idf: ">=5.0"

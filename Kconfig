@@ -1,0 +1,11 @@
+menu "UART link"
+
+    config UART_LINK_MAX_PAYLOAD
+        int "Largest message payload in bytes"
+        range 8 1024
+        default 256
+        help
+            Both ends must use the same value. Every link keeps a few buffers of this size,
+            and every message in the receive queue takes this much memory.
+
+endmenu
