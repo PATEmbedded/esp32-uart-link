@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  host:
+    name: Host tests (${{ matrix.compiler }}, sanitizers)
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install Python packages
+        run: pip install pytest flake8
+      - name: Configure
+        run: >
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_C_COMPILER=${{ matrix.compiler }} -DUL_SANITIZE=ON
+      - name: Build
+        run: cmake --build build --parallel
+      - name: Unit tests
+        run: ctest --test-dir build --output-on-failure
+      - name: Python implementation, and against the C core
+        env:
+          UL_TOOL: build/ul_tool
+        run: python -m pytest test/python -q
+      - name: flake8
+        if: matrix.compiler == 'gcc'
+        run: flake8 tools test/python
+
+  fuzz:
+    name: Fuzz the receive path (libFuzzer)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build
+        run: |
+          cmake -S . -B build -DCMAKE_C_COMPILER=clang -DUL_FUZZ=ON -DUL_BUILD_TESTS=OFF
+          cmake --build build --target fuzz_receive --parallel
+      - name: Fuzz for 2 minutes
+        run: |
+          mkdir -p corpus
+          ./build/fuzz_receive corpus -max_total_time=120 -print_final_stats=1
+
+  static-analysis:
+    name: Static analysis (cppcheck)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install cppcheck
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends cppcheck
+      - name: cppcheck
+        run: >
+          cppcheck --std=c11 --enable=warning,style,performance,portability
+          --error-exitcode=1 --inline-suppr --suppress=missingIncludeSystem
+          -I core/include core tools/cli fuzz
+
+  esp-idf:
+    name: ESP-IDF ${{ matrix.idf }} (${{ matrix.target }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        idf: [v5.5.6, v6.0.3]
+        target: [esp32, esp32s3, esp32c3]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the echo example
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: ${{ matrix.idf }}
+          target: ${{ matrix.target }}
+          path: examples/echo
+      - name: Build the sensor_stream example
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: ${{ matrix.idf }}
+          target: ${{ matrix.target }}
+          path: examples/sensor_stream
