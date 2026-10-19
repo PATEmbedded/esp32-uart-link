@@ -1,0 +1,21 @@
+# CMake and ESP-IDF build output
+build*/
+sdkconfig
+sdkconfig.old
+dependencies.lock
+managed_components/
+
+# Fuzzing
+corpus/
+crash-*
+leak-*
+timeout-*
+
+# Python
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# Editors
+.vscode/
+.idea/
