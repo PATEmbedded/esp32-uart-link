@@ -1,0 +1,22 @@
+menu "Example"
+
+    config EXAMPLE_UART_PORT
+        int "UART port"
+        range 0 2
+        default 1
+        help
+            UART0 carries the log on most boards, so the example uses UART1.
+
+    config EXAMPLE_TX_GPIO
+        int "TX GPIO"
+        default 4
+
+    config EXAMPLE_RX_GPIO
+        int "RX GPIO"
+        default 5
+
+    config EXAMPLE_BAUD_RATE
+        int "Baud rate"
+        default 115200
+
+endmenu
