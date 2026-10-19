@@ -54,8 +54,6 @@ static void print_frame(void *ctx, const ul_frame_t *frame)
 
 int main(int argc, char **argv)
 {
-    static uint8_t input[1u << 16];
-
     if (argc == 6 && strcmp(argv[1], "encode") == 0) {
         uint8_t payload[UL_MAX_PAYLOAD + 1u];
         const ul_frame_t frame = {
@@ -76,6 +74,7 @@ int main(int argc, char **argv)
         return 0;
     }
     if (argc == 3 && strcmp(argv[1], "decode") == 0) {
+        static uint8_t input[1u << 16];
         const size_t len = parse_hex(argv[2], input, sizeof(input));
         static ul_decoder_t dec;
         ul_decoder_init(&dec);
